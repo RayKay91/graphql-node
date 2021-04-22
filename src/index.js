@@ -1,19 +1,42 @@
 const { ApolloServer } = require( 'apollo-server' )
-// type defs defines the GraphQL Schema.
-const typeDefs = `
-type Query {
-    info: String!
-}
-`
-// resolvers is the implementation of the GQL schema. The structure is identical to the structure of the type definition. What the function returns is what will be sent to the client.
+const fs = require( 'fs' )
+const path = require( 'path' )
+
+
+//dummy data
+let links = [ {
+    id: 'link-0',
+    url: 'www.howtographql.com',
+    description: 'Fullstack tutorial for GraphQL'
+} ]
+
+let idCount = links.length
+// adding a new resolver for the feed root field. The resolver should be named exactly the same as the corresponding field from the schema definition.
 const resolvers = {
     Query: {
-        info: () => null
+        info: () => null,
+        feed: () => links
+    },
+    Link: {
+        id: ( parent ) => parent.id,
+        description: ( parent ) => { console.log( parent ); return parent.description },
+        url: parent => parent.url
+    },
+    Mutation: {
+        post: ( parent, args ) => {
+            const link = {
+                id: `link-${ idCount++ }`,
+                description: args.description,
+                url: args.url
+            }
+            links.push( link )
+            return link
+        }
     }
 }
 
 const server = new ApolloServer( {
-    typeDefs,
+    typeDefs: fs.readFileSync( path.join( __dirname, 'schema.graphql' ), { encoding: 'utf8' } ),
     resolvers
 } )
 
